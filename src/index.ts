@@ -1,9 +1,15 @@
 import dotenv from 'dotenv'
 import FeedGenerator from './server'
+import { AtpAgent } from '@atproto/api'
 
 const run = async () => {
   dotenv.config()
   const hostname = maybeStr(process.env.FEEDGEN_HOSTNAME) ?? 'example.com'
+  const handle: string = maybeStr(process.env.FEEDGEN_USER_HANDLE) ?? `did:web:${hostname}`
+  const password: string = maybeStr(process.env.FEEDGEN_USER_PASSWORD) ?? `did:web:${hostname}`
+  const agent = new AtpAgent({service : 'https://bsky.social' })
+  await agent.login({ identifier: process.env.FEEDGEN_USER_HANDLE!, password: process.env.FEEDGEN_USER_PASSWORD!})
+
   const serviceDid =
     maybeStr(process.env.FEEDGEN_SERVICE_DID) ?? `did:web:${hostname}`
   const server = FeedGenerator.create({
@@ -19,6 +25,7 @@ const run = async () => {
       maybeInt(process.env.FEEDGEN_SUBSCRIPTION_RECONNECT_DELAY) ?? 3000,
     hostname,
     serviceDid,
+    agent
   })
   await server.start()
   console.log(
